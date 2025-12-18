@@ -1,4 +1,6 @@
 ﻿using MyLabProject.BusinessLogic;
+using MyLabProject.Commands;
+using MyLabProject.Builders;
 using Serilog;
 
 namespace MyLabProject
@@ -20,57 +22,45 @@ namespace MyLabProject
             try
             {
                 Log.Information("=== Application started ===");
-                Console.WriteLine("Hello! It is a new project!!!");
+                Console.WriteLine("╔════════════════════════════════════════════════╗");
+                Console.WriteLine("║   Калькулятор з командним інтерфейсом (Shell) ║");
+                Console.WriteLine("╚════════════════════════════════════════════════╝");
                 Console.WriteLine();
 
-                Calculator calc = new Calculator();
+                // Демонстрація патерну Builder
+                DemonstrateBuilder();
 
-                Console.WriteLine("=== Демонстрація Calculator ===");
-                Console.WriteLine();
+                // Створення калькулятора
+                Calculator calculator = new Calculator();
 
-                // Успішні операції
-                Console.WriteLine("--- Успішні операції ---");
-                Console.WriteLine($"5 + 3 = {calc.Add(5, 3)}");
-                Console.WriteLine($"10 - 4 = {calc.Subtract(10, 4)}");
-                Console.WriteLine($"6 * 7 = {calc.Multiply(6, 7)}");
-                Console.WriteLine($"15 / 3 = {calc.Divide(15, 3)}");
-                Console.WriteLine($"5! = {calc.Factorial(5)}");
+                // Створення базових команд
+                ReturnCommand returnCommand = new ReturnCommand();
+                ExitCommand exitCommand = new ExitCommand();
 
-                Console.WriteLine();
-                Console.WriteLine("--- Тест обробки помилок ---");
+                // Головне меню
+                Menu mainMenu = new Menu("main");
+                mainMenu.Add(exitCommand);
+                mainMenu.Add(new HelpCommand("Головне меню програми. Виберіть підменю для роботи або exit для виходу."));
 
-                // Тест 1: Ділення на нуль
-                try
-                {
-                    Console.WriteLine("Спроба поділити 10 / 0...");
-                    calc.Divide(10, 0);
-                }
-                catch (DivideByZeroException ex)
-                {
-                    Console.WriteLine($"❌ Помилка: {ex.Message}");
-                    Log.Warning("Division by zero was handled in main program");
-                }
+                // Підменю Calculator
+                Menu calculatorMenu = new Menu("calculator");
+                calculatorMenu.Add(returnCommand);
+                calculatorMenu.Add(exitCommand);
+                calculatorMenu.Add(new AddCommand(calculator));
+                calculatorMenu.Add(new SubtractCommand(calculator));
+                calculatorMenu.Add(new MultiplyCommand(calculator));
+                calculatorMenu.Add(new DivideCommand(calculator));
+                calculatorMenu.Add(new FactorialCommand(calculator));
+                calculatorMenu.Add(new HelpCommand("Меню калькулятора. Виберіть операцію: add, subtract, multiply, divide, factorial."));
 
-                Console.WriteLine();
+                // Додаємо підменю до головного
+                mainMenu.Add(calculatorMenu);
 
-                // Тест 2: Негативний факторіал
-                try
-                {
-                    Console.WriteLine("Спроба обчислити (-5)!...");
-                    calc.Factorial(-5);
-                }
-                catch (ArgumentException ex)
-                {
-                    Console.WriteLine($"❌ Помилка: {ex.Message}");
-                    Log.Warning("Negative factorial was handled in main program");
-                }
+                // Запуск головного меню
+                mainMenu.Execute();
 
                 Console.WriteLine();
-                Console.WriteLine("=== Перевірте файл логів у папці logs/ ===");
-                Console.WriteLine();
-                Console.WriteLine("Натисніть будь-яку клавішу для виходу...");
-                Console.ReadLine();
-
+                Console.WriteLine("Дякуємо за використання програми!");
                 Log.Information("=== Application finished successfully ===");
             }
             catch (Exception ex)
@@ -82,6 +72,54 @@ namespace MyLabProject
             {
                 Log.CloseAndFlush();
             }
+        }
+
+        /// <summary>
+        /// Демонстрація патерну Builder
+        /// </summary>
+        static void DemonstrateBuilder()
+        {
+            Console.WriteLine("=== Демонстрація патерну Builder ===");
+            Console.WriteLine();
+
+            try
+            {
+                // Приклад 1: Просте обчислення
+                var calculation1 = CalculationBuilder.Create()
+                    .WithDescription("Просте додавання")
+                    .AddOperation("5 + 3")
+                    .WithResult(8)
+                    .Build();
+
+                Console.WriteLine("Обчислення 1:");
+                Console.WriteLine(calculation1);
+                Console.WriteLine();
+
+                // Приклад 2: Складне обчислення
+                var calculation2 = CalculationBuilder.Create()
+                    .WithDescription("Складне обчислення")
+                    .AddOperation("10 + 5 = 15")
+                    .AddOperation("15 * 2 = 30")
+                    .AddOperation("30 - 10 = 20")
+                    .WithResult(20)
+                    .Build();
+
+                Console.WriteLine("Обчислення 2:");
+                Console.WriteLine(calculation2);
+                Console.WriteLine();
+
+                Console.WriteLine("✅ Патерн Builder працює коректно!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Помилка в Builder: {ex.Message}");
+                Log.Error(ex, "Error demonstrating Builder pattern");
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("Натисніть Enter для переходу до Shell...");
+            Console.ReadLine();
+            Console.Clear();
         }
     }
 }
